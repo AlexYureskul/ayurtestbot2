@@ -1,14 +1,14 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'  # Замените на токен вашего бота
+TOKEN = '7819976814:AAFmXEUdTj2-UgNuj32Uhcc6edLrZden2TE'  # Замените на токен вашего бота
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
             InlineKeyboardButton(
                 text="Открыть игру",
-                web_app={'url': 'https://yourusername.github.io/my_telegram_webapp/'}
+                web_app={'url': 'https://alexyureskul.github.io/ayurtestbot2/'}
             )
         ]
     ]
