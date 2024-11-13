@@ -1,4 +1,4 @@
-/* Reset Styles */
+/* Сброс стилей */
 * {
     margin: 0;
     padding: 0;
@@ -20,7 +20,7 @@ body, html {
     height: 100%;
 }
 
-/* Language Switcher */
+/* Переключатель языков */
 #language-switcher {
     position: absolute;
     top: 20px;
@@ -41,14 +41,14 @@ body, html {
     color: #61dafb;
 }
 
-/* Canvas */
+/* Холст */
 #game-canvas {
     width: 100%;
     height: 100%;
     display: block;
 }
 
-/* Clicker Interface */
+/* Интерфейс кликера */
 #clicker {
     position: absolute;
     bottom: 20px;
@@ -80,9 +80,19 @@ body, html {
 
 #click-button:active {
     transform: scale(0.95);
+    position: absolute;
+    top: calc(50% - 25px);
+    left: calc(50% - 75px);
+    animation: moveButton 1s ease-in-out forwards;
 }
 
-/* Settings Button */
+/* Анимация перемещения кнопки */
+@keyframes moveButton {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(100px, -100px); }
+}
+
+/* Кнопка настроек */
 #settings-button {
     position: absolute;
     top: 20px;
@@ -98,7 +108,7 @@ body, html {
     height: 24px;
 }
 
-/* Friends Button */
+/* Кнопка "Друзья" */
 #friends-button {
     position: absolute;
     top: 20px;
@@ -114,7 +124,7 @@ body, html {
     height: 24px;
 }
 
-/* Settings Menu */
+/* Меню настроек */
 #settings-menu {
     position: absolute;
     top: 70px;
@@ -167,7 +177,7 @@ body, html {
     cursor: pointer;
 }
 
-/* Friends Tab */
+/* Вкладка друзей */
 #friends-tab {
     position: absolute;
     top: 70px;
@@ -220,7 +230,7 @@ body, html {
     color: #ffffff;
 }
 
-/* Responsive Design */
+/* Адаптивный дизайн */
 @media (max-width: 768px) {
     #click-button {
         font-size: 16px;

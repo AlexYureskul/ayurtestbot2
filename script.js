@@ -1,22 +1,20 @@
-// Initialize Telegram Web App
-const tg = window.Telegram.WebApp;
+// script.js
+
 import firebaseConfig from './config.js';
-// Firebase Configuration
-//cfg
-//
-// Initialize Firebase
+
+// Инициализация Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Initialize services
+// Инициализация сервисов
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Anonymous Sign-In
+// Анонимный вход
 auth.signInAnonymously().catch((error) => {
     console.error(error);
 });
 
-// Get current user
+// Текущий пользователь
 let currentUser;
 auth.onAuthStateChanged((user) => {
     if (user) {
@@ -25,41 +23,41 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// Initialize the app after authentication
+// Инициализация приложения после аутентификации
 function initApp() {
-    // Check for referral
+    // Обработка реферальной системы
     handleReferral();
 
-    // Load settings and character
+    // Загрузка настроек и персонажа
     loadSettings();
     loadCharacter(currentCharacterIndex);
 
-    // Load score
+    // Загрузка счёта
     loadScore();
 
-    // Generate character list
+    // Генерация списка персонажей
     generateCharactersList();
 
-    // Load localization
+    // Загрузка локализации
     loadLocales();
 
-    // Start animation
+    // Запуск анимации
     animate();
 }
 
-// Handle referral system
+// Обработка реферальной системы
 function handleReferral() {
     const urlParams = new URLSearchParams(window.location.search);
     const referrerId = urlParams.get('ref');
 
     if (referrerId && currentUser.uid !== referrerId) {
-        // Save referral info
+        // Сохранение информации о реферале
         db.collection('users').doc(currentUser.uid).set({
             referrer: referrerId,
             score: score,
         }, { merge: true });
 
-        // Update referrer's data
+        // Обновление данных реферера
         db.collection('users').doc(referrerId).update({
             score: firebase.firestore.FieldValue.increment(1000),
             friends: firebase.firestore.FieldValue.arrayUnion(currentUser.uid),
@@ -67,15 +65,15 @@ function handleReferral() {
     }
 }
 
-// Localization Setup
-let currentLanguage = 'en';
+// Локализация
+let currentLanguage = 'ru';
 const resources = {
     en: {},
     ru: {},
     uk: {}
 };
 
-// Load language files
+// Загрузка языковых файлов
 async function loadLocales() {
     const langs = ['en', 'ru', 'uk'];
     for (const lang of langs) {
@@ -85,7 +83,7 @@ async function loadLocales() {
     initI18n();
 }
 
-// Initialize i18next
+// Инициализация i18next
 function initI18n() {
     i18next.init({
         lng: currentLanguage,
@@ -96,21 +94,22 @@ function initI18n() {
     });
 }
 
-// Update content on language change
+// Обновление контента при переключении языка
 function updateContent() {
     document.getElementById('score').innerText = `${i18next.t('score')}: ${score}`;
     document.getElementById('click-button').innerText = i18next.t('clickMe');
 }
 
-// Language switcher
+// Переключение языка
 document.getElementById('language-switcher').addEventListener('click', (e) => {
     if (e.target.tagName === 'BUTTON') {
         currentLanguage = e.target.getAttribute('data-lang');
         i18next.changeLanguage(currentLanguage, updateContent);
+        saveSettings();
     }
 });
 
-// Game Logic
+// Логика игры
 let score = 0;
 
 function loadScore() {
@@ -136,30 +135,61 @@ document.getElementById('click-button').addEventListener('click', () => {
     saveScore();
 });
 
-// Three.js Setup
+// Three.js
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), alpha: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
-// Lights
+// Свет
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
-// Characters
+// Модели, перемещающиеся по экрану
+const models = [];
+const modelPaths = [
+    './assets/models/character1.glb',
+    './assets/models/character2.glb',
+    './assets/models/character3.glb',
+    './assets/models/character4.glb',
+    './assets/models/character5.glb',
+];
+
+// Загрузка моделей и их хаотичное движение
+function loadMovingModels() {
+    const loader = new THREE.GLTFLoader();
+    modelPaths.forEach((path, index) => {
+        loader.load(path, (gltf) => {
+            const model = gltf.scene;
+            model.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, 0);
+            scene.add(model);
+            models.push({ model: model, speed: Math.random() * 0.02 });
+        });
+    });
+}
+
+// Анимация моделей
+function animateModels() {
+    models.forEach((obj) => {
+        obj.model.position.x += (Math.random() - 0.5) * obj.speed;
+        obj.model.position.y += (Math.random() - 0.5) * obj.speed;
+    });
+}
+
+// Персонажи
 const characters = [
-    { name: 'Character 1', modelPath: './assets/models/character1.glb' },
-    { name: 'Character 2', modelPath: './assets/models/character2.glb' },
-    { name: 'Character 3', modelPath: './assets/models/character3.glb' },
-    { name: 'Character 4', modelPath: './assets/models/character4.glb' },
-    { name: 'Character 5', modelPath: './assets/models/character5.glb' },
+    { name: 'Персонаж 1', modelPath: './assets/models/character1.glb' },
+    { name: 'Персонаж 2', modelPath: './assets/models/character2.glb' },
+    { name: 'Персонаж 3', modelPath: './assets/models/character3.glb' },
+    { name: 'Персонаж 4', modelPath: './assets/models/character4.glb' },
+    { name: 'Персонаж 5', modelPath: './assets/models/character5.glb' },
 ];
 
 let currentCharacterIndex = 0;
 let character;
 
-// Load character
+// Загрузка персонажа
 function loadCharacter(index) {
     if (character) {
         scene.remove(character);
@@ -173,7 +203,7 @@ function loadCharacter(index) {
     });
 }
 
-// Character selection
+// Выбор персонажа
 function selectCharacter(index) {
     currentCharacterIndex = index;
     loadCharacter(currentCharacterIndex);
@@ -181,18 +211,19 @@ function selectCharacter(index) {
     updateCharacterSelection();
 }
 
-// Load settings
+// Загрузка настроек
 function loadSettings() {
     db.collection('users').doc(currentUser.uid).get().then((doc) => {
         if (doc.exists) {
             currentCharacterIndex = doc.data().characterIndex || 0;
-            currentLanguage = doc.data().language || 'en';
+            currentLanguage = doc.data().language || 'ru';
+            i18next.changeLanguage(currentLanguage, updateContent);
         }
         updateContent();
     });
 }
 
-// Save settings
+// Сохранение настроек
 function saveSettings() {
     db.collection('users').doc(currentUser.uid).set({
         characterIndex: currentCharacterIndex,
@@ -200,7 +231,7 @@ function saveSettings() {
     }, { merge: true });
 }
 
-// Generate character list
+// Генерация списка персонажей
 function generateCharactersList() {
     const charactersList = document.getElementById('characters-list');
     charactersList.innerHTML = '';
@@ -218,7 +249,7 @@ function generateCharactersList() {
     });
 }
 
-// Update character selection
+// Обновление выделения выбранного персонажа
 function updateCharacterSelection() {
     const options = document.querySelectorAll('.character-option');
     options.forEach((option, index) => {
@@ -226,7 +257,7 @@ function updateCharacterSelection() {
     });
 }
 
-// UI Elements
+// Элементы интерфейса
 const settingsButton = document.getElementById('settings-button');
 const settingsMenu = document.getElementById('settings-menu');
 const closeSettingsButton = document.getElementById('close-settings');
@@ -234,28 +265,28 @@ const friendsButton = document.getElementById('friends-button');
 const friendsTab = document.getElementById('friends-tab');
 const closeFriendsTabButton = document.getElementById('close-friends-tab');
 
-// Open settings
+// Открытие настроек
 settingsButton.addEventListener('click', () => {
     settingsMenu.style.display = 'block';
 });
 
-// Close settings
+// Закрытие настроек
 closeSettingsButton.addEventListener('click', () => {
     settingsMenu.style.display = 'none';
 });
 
-// Open friends tab
+// Открытие вкладки друзей
 friendsButton.addEventListener('click', () => {
     friendsTab.style.display = 'block';
     loadFriends();
 });
 
-// Close friends tab
+// Закрытие вкладки друзей
 closeFriendsTabButton.addEventListener('click', () => {
     friendsTab.style.display = 'none';
 });
 
-// Load friends
+// Загрузка списка друзей
 function loadFriends() {
     const friendsListElement = document.getElementById('friends-list');
     friendsListElement.innerHTML = '';
@@ -264,49 +295,4 @@ function loadFriends() {
         if (doc.exists) {
             const friends = doc.data().friends || [];
             friends.forEach((friendId) => {
-                db.collection('users').doc(friendId).get().then((friendDoc) => {
-                    if (friendDoc.exists) {
-                        const friendData = friendDoc.data();
-                        const friendItem = document.createElement('div');
-                        friendItem.classList.add('friend-item');
-
-                        // Add friend's info
-                        friendItem.innerHTML = `
-                            <img src="./assets/images/default-avatar.png" alt="Friend">
-                            <div class="friend-name">Friend ID: ${friendId}</div>
-                        `;
-
-                        friendsListElement.appendChild(friendItem);
-                    }
-                });
-            });
-        }
-    });
-}
-
-// Animation
-camera.position.z = 5;
-function animate() {
-    requestAnimationFrame(animate);
-
-    if (character) {
-        character.rotation.y += 0.01;
-    }
-
-    renderer.render(scene, camera);
-}
-
-// Handle window resize
-window.addEventListener('resize', () => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-
-    renderer.setSize(width, height);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-});
-
-// Handle theme based on Telegram settings
-document.body.style.backgroundColor = tg.themeParams.bg_color || '#282c34';
-document.body.style.color = tg.themeParams.text_color || '#ffffff';
-
+                db.collection('users').doc(friendId).get().then((friendDoc) =>
