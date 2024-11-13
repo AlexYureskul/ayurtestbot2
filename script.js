@@ -1,11 +1,8 @@
-// Инициализация Telegram Web App
+// Initialize Telegram Web App
 const tg = window.Telegram.WebApp;
-
-// Firebase configuration
-const firebaseConfig = {
-  //
-};
-
+import firebaseConfig from './config.js';
+// Firebase Configuration
+//cfg
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
@@ -311,3 +308,4 @@ window.addEventListener('resize', () => {
 // Handle theme based on Telegram settings
 document.body.style.backgroundColor = tg.themeParams.bg_color || '#282c34';
 document.body.style.color = tg.themeParams.text_color || '#ffffff';
+
