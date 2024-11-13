@@ -2,10 +2,12 @@
 
 // Firebase конфигурация
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "your-project-id.firebaseapp.com",
-    projectId: "your-project-id",
-    // ... другие настройки
+  apiKey: "AIzaSyAkdTpWuDDqs0iKDdxOkDlgnue9uEQOUO0",
+  authDomain: "ayurtestbot2-6d1ea.firebaseapp.com",
+  projectId: "ayurtestbot2-6d1ea",
+  storageBucket: "ayurtestbot2-6d1ea.firebasestorage.app",
+  messagingSenderId: "935248261137",
+  appId: "1:935248261137:web:4a468ed8d42dc0b724c1b0"
 };
 
 // Импорт Firebase модулей
