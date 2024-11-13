@@ -8,8 +8,6 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- GLTFLoader для Three.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/loaders/GLTFLoader.js"></script>
     <!-- i18next для локализации -->
     <script src="https://unpkg.com/i18next@21.6.8/i18next.min.js"></script>
     <!-- Стили -->
@@ -17,8 +15,20 @@
 </head>
 <body>
     <div id="app">
+        <!-- Верхняя панель -->
+        <div id="top-bar">
+            <button id="close-app">Close</button>
+            <div id="user-profile">
+                <img id="user-icon" src="./assets/images/default-avatar.png" alt="User Icon">
+                <span id="user-name">Username</span>
+            </div>
+        </div>
+
+        <!-- Кнопка "Play" -->
+        <button id="play-button">Play</button>
+
         <!-- Кнопка меню -->
-        <button id="menu-button">☰</button>
+        <button id="menu-button" style="display: none;">☰</button>
 
         <!-- Выпадающее меню -->
         <div id="dropdown-menu" style="display: none;">
@@ -68,16 +78,25 @@
         </div>
 
         <!-- Холст для 3D-графики -->
-        <canvas id="game-canvas"></canvas>
+        <canvas id="game-canvas" style="display: none;"></canvas>
 
         <!-- Интерфейс кликера -->
-        <div id="clicker">
+        <div id="clicker" style="display: none;">
             <p id="score"></p>
             <button id="click-button"></button>
         </div>
 
         <!-- Уведомления -->
         <div id="notification" style="display: none;"></div>
+
+        <!-- Нижняя навигационная панель -->
+        <div id="bottom-nav">
+            <button id="nav-home">Home</button>
+            <button id="nav-earn">Earn</button>
+            <button id="nav-memepad">Memepad</button>
+            <button id="nav-friends">Friends</button>
+            <button id="nav-wallet">Wallet</button>
+        </div>
     </div>
 
     <!-- Подключаем скрипт -->

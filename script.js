@@ -28,6 +28,9 @@ import {
     getDocs
 } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
+// Импорт GLTFLoader
+import { GLTFLoader } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js';
+
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 
@@ -98,8 +101,14 @@ async function initApp() {
     // Загрузка локализации
     await loadLocales();
 
+    // Загрузка информации о пользователе
+    loadUserProfile();
+
     // Запуск анимации
     animate();
+
+    // Загрузка моделей
+    loadMovingModels();
 }
 
 // Обработка реферальной системы
@@ -212,7 +221,7 @@ document.getElementById('click-button').addEventListener('click', () => {
 function moveButton() {
     const button = document.getElementById('click-button');
     const x = Math.random() * (window.innerWidth - button.offsetWidth);
-    const y = Math.random() * (window.innerHeight - button.offsetHeight);
+    const y = Math.random() * (window.innerHeight - button.offsetHeight - 80); // Учитываем нижнюю панель
 
     button.style.position = 'absolute';
     button.style.left = `${x}px`;
@@ -240,15 +249,22 @@ const modelPaths = [
     './assets/models/character5.glb',
 ];
 
-// Загрузка моделей и их хаотичное движение
 function loadMovingModels() {
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
     modelPaths.forEach((path, index) => {
         loader.load(path, (gltf) => {
             const model = gltf.scene;
             model.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, 0);
             scene.add(model);
             models.push({ model: model, speed: Math.random() * 0.02 });
+
+            // Проверяем наличие анимаций
+            if (gltf.animations && gltf.animations.length > 0) {
+                const mixer = new THREE.AnimationMixer(model);
+                const action = mixer.clipAction(gltf.animations[0]);
+                action.play();
+                model.userData.mixer = mixer;
+            }
         }, undefined, (error) => {
             console.error(`Ошибка загрузки модели ${path}:`, error);
         });
@@ -256,10 +272,15 @@ function loadMovingModels() {
 }
 
 // Анимация моделей
-function animateModels() {
+function animateModels(delta) {
     models.forEach((obj) => {
         obj.model.position.x += (Math.random() - 0.5) * obj.speed;
         obj.model.position.y += (Math.random() - 0.5) * obj.speed;
+
+        // Обновление анимаций
+        if (obj.model.userData.mixer) {
+            obj.model.userData.mixer.update(delta);
+        }
     });
 }
 
@@ -274,17 +295,26 @@ const characters = [
 
 let currentCharacterIndex = 0;
 let character;
+let mixer;
+const clock = new THREE.Clock();
 
 // Загрузка персонажа
 function loadCharacter(index) {
     if (character) {
         scene.remove(character);
     }
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
     loader.load(characters[index].modelPath, (gltf) => {
         character = gltf.scene;
         character.position.set(0, -1, 0);
         scene.add(character);
+
+        // Проверяем наличие анимаций
+        if (gltf.animations && gltf.animations.length > 0) {
+            mixer = new THREE.AnimationMixer(character);
+            const action = mixer.clipAction(gltf.animations[0]);
+            action.play();
+        }
     }, undefined, (error) => {
         console.error('Ошибка загрузки персонажа:', error);
     });
@@ -585,11 +615,17 @@ camera.position.z = 5;
 function animate() {
     requestAnimationFrame(animate);
 
+    const delta = clock.getDelta();
+
+    if (mixer) {
+        mixer.update(delta);
+    }
+
     if (character) {
         character.rotation.y += 0.01;
     }
 
-    animateModels();
+    animateModels(delta);
 
     renderer.render(scene, camera);
 }
@@ -604,5 +640,32 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-// Запуск приложения
-loadMovingModels();
+// Загрузка информации о пользователе
+function loadUserProfile() {
+    const userNameElement = document.getElementById('user-name');
+    userNameElement.innerText = `ID: ${currentUser.uid}`;
+}
+
+// Обработчики интерфейса
+document.getElementById('play-button').addEventListener('click', () => {
+    // Скрываем кнопку "Play" и показываем игровой интерфейс
+    document.getElementById('play-button').style.display = 'none';
+    document.getElementById('game-canvas').style.display = 'block';
+    document.getElementById('clicker').style.display = 'block';
+    document.getElementById('menu-button').style.display = 'block';
+
+    // Запускаем игру
+    startGame();
+});
+
+// Функция запуска игры
+function startGame() {
+    // Загрузка персонажа
+    loadCharacter(currentCharacterIndex);
+}
+
+// Кнопка закрытия приложения
+document.getElementById('close-app').addEventListener('click', () => {
+    // Закрытие приложения (если применяется в Telegram Web App)
+    Telegram.WebApp.close();
+});
