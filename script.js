@@ -1,6 +1,6 @@
 // script.js
 
-import firebaseConfig from './config.js';
+import firebaseConfig from 'config.js';
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
