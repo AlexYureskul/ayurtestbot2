@@ -3,12 +3,7 @@ const tg = window.Telegram.WebApp;
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyDUFbhAbTv6vJ3vtxNkARakwA28aF7wEmM",
-  authDomain: "ayurtestbot2-e3291.firebaseapp.com",
-  projectId: "ayurtestbot2-e3291",
-  storageBucket: "ayurtestbot2-e3291.firebasestorage.app",
-  messagingSenderId: "678487006693",
-  appId: "1:678487006693:web:d891892e5e1c612850e30c"
+  //
 };
 
 // Initialize Firebase
