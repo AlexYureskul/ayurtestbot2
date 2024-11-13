@@ -1,71 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Telegram Web App Game</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <!-- Telegram Web Apps JS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Подключаем Telegram Web Apps JS -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Three.js -->
+    <!-- Подключаем Three.js из CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- Three.js GLTF Loader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/js/loaders/GLTFLoader.js"></script>
-    <!-- i18next for localization -->
+    <!-- Подключаем i18next для локализации -->
     <script src="https://unpkg.com/i18next@21.6.8/i18next.min.js"></script>
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <!-- Styles -->
+    <!-- Подключаем стили -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="app">
-        <!-- Settings Button -->
-        <button id="settings-button">
-            <img src="./assets/images/settings-icon.png" alt="Settings">
-        </button>
-
-        <!-- Friends Button -->
-        <button id="friends-button">
-            <img src="./assets/images/friends-icon.png" alt="Friends">
-        </button>
-
-        <!-- Settings Menu -->
-        <div id="settings-menu">
-            <h2>Settings</h2>
-            <div id="character-selection">
-                <h3>Select Character</h3>
-                <div id="characters-list"></div>
-            </div>
-            <button id="close-settings">Close</button>
-        </div>
-
-        <!-- Friends Tab -->
-        <div id="friends-tab">
-            <button id="close-friends-tab">✕</button>
-            <h2>My Friends</h2>
-            <div id="friends-list"></div>
-        </div>
-
-        <!-- Language Switcher -->
+        <!-- Переключатель языков -->
         <div id="language-switcher">
             <button data-lang="en">English</button>
             <button data-lang="ru">Русский</button>
             <button data-lang="uk">Українська</button>
         </div>
-
-        <!-- Canvas for 3D Graphics -->
+        <!-- Холст для 3D-графики -->
         <canvas id="game-canvas"></canvas>
-
-        <!-- Clicker Interface -->
+        <!-- Интерфейс кликера -->
         <div id="clicker">
             <p id="score"></p>
             <button id="click-button"></button>
         </div>
     </div>
 
-    <!-- Main Script -->
+    <!-- Подключаем скрипты -->
     <script src="script.js"></script>
 </body>
 </html>
