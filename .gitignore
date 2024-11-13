@@ -68,4 +68,6 @@ node_modules/
 # dataconnect generated files
 .dataconnect
 
-
+bot.py
+config.js
+serviceAccountKey.json
