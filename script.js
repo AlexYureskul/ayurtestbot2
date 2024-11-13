@@ -1,10 +1,32 @@
 // script.js
 
-import firebaseConfig from './config.js';
+// Firebase конфигурация
+const firebaseConfig = {
+  apiKey: "AIzaSyAkdTpWuDDqs0iKDdxOkDlgnue9uEQOUO0",
+  authDomain: "ayurtestbot2-6d1ea.firebaseapp.com",
+  projectId: "ayurtestbot2-6d1ea",
+  storageBucket: "ayurtestbot2-6d1ea.firebasestorage.app",
+  messagingSenderId: "935248261137",
+  appId: "1:935248261137:web:4a468ed8d42dc0b724c1b0"
+};
 
+// Импорт Firebase модулей
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
 import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, arrayUnion, increment } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+import {
+    getFirestore,
+    doc,
+    getDoc,
+    setDoc,
+    updateDoc,
+    arrayUnion,
+    increment,
+    collection,
+    query,
+    orderBy,
+    limit,
+    getDocs
+} from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
@@ -20,14 +42,14 @@ signInAnonymously(auth).catch((error) => {
 
 // Текущий пользователь
 let currentUser;
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
 
         // Регистрация пользователя в базе данных
-        registerUserInDatabase(currentUser.uid).then(() => {
-            initApp();
-        });
+        await registerUserInDatabase(currentUser.uid);
+
+        initApp();
     } else {
         console.error('Пользователь не аутентифицирован');
     }
@@ -47,6 +69,8 @@ async function registerUserInDatabase(uid) {
             referrer: null,
             characterIndex: 0,
             language: 'ru',
+            achievements: [],
+            theme: 'dark'
         });
         console.log('Новый пользователь зарегистрирован в базе данных.');
     } else {
@@ -55,21 +79,24 @@ async function registerUserInDatabase(uid) {
 }
 
 // Инициализация приложения после аутентификации
-function initApp() {
+async function initApp() {
     // Обработка реферальной системы
-    handleReferral();
+    await handleReferral();
 
     // Загрузка настроек и персонажа
-    loadSettings();
+    await loadSettings();
 
     // Загрузка счёта
-    loadScore();
+    await loadScore();
+
+    // Загрузка достижений
+    await loadUserAchievements();
 
     // Генерация списка персонажей
     generateCharactersList();
 
     // Загрузка локализации
-    loadLocales();
+    await loadLocales();
 
     // Запуск анимации
     animate();
@@ -145,14 +172,18 @@ document.getElementById('language-switcher').addEventListener('click', (e) => {
 let score = 0;
 
 async function loadScore() {
-    const userRef = doc(db, 'users', currentUser.uid);
-    const docSnap = await getDoc(userRef);
-    if (docSnap.exists()) {
-        score = docSnap.data().score || 0;
-    } else {
-        score = 0;
+    try {
+        const userRef = doc(db, 'users', currentUser.uid);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+            score = docSnap.data().score || 0;
+        } else {
+            score = 0;
+        }
+        updateContent();
+    } catch (error) {
+        console.error('Ошибка при загрузке счёта:', error);
     }
-    updateContent();
 }
 
 function saveScore() {
@@ -166,6 +197,12 @@ document.getElementById('click-button').addEventListener('click', () => {
     score++;
     updateContent();
     saveScore();
+
+    // Звуковой эффект клика
+    playSound('click');
+
+    // Проверка достижений
+    checkAchievements();
 
     // Перемещение кнопки
     moveButton();
@@ -263,14 +300,23 @@ function selectCharacter(index) {
 
 // Загрузка настроек
 async function loadSettings() {
-    const userRef = doc(db, 'users', currentUser.uid);
-    const docSnap = await getDoc(userRef);
-    if (docSnap.exists()) {
-        currentCharacterIndex = docSnap.data().characterIndex || 0;
-        currentLanguage = docSnap.data().language || 'ru';
-        i18next.changeLanguage(currentLanguage, updateContent);
+    try {
+        const userRef = doc(db, 'users', currentUser.uid);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            currentCharacterIndex = data.characterIndex || 0;
+            currentLanguage = data.language || 'ru';
+            currentTheme = data.theme || 'dark';
+            i18next.changeLanguage(currentLanguage, updateContent);
+
+            // Применение темы
+            applyTheme(currentTheme);
+        }
+        updateContent();
+    } catch (error) {
+        console.error('Ошибка при загрузке настроек:', error);
     }
-    updateContent();
 }
 
 // Сохранение настроек
@@ -279,6 +325,7 @@ function saveSettings() {
     setDoc(userRef, {
         characterIndex: currentCharacterIndex,
         language: currentLanguage,
+        theme: currentTheme,
     }, { merge: true }).catch((error) => {
         console.error('Ошибка при сохранении настроек:', error);
     });
@@ -310,17 +357,67 @@ function updateCharacterSelection() {
     });
 }
 
+// Тема оформления
+let currentTheme = 'dark';
+
+function toggleTheme() {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(currentTheme);
+    saveSettings();
+}
+
+function applyTheme(theme) {
+    if (theme === 'light') {
+        document.documentElement.classList.add('light-theme');
+    } else {
+        document.documentElement.classList.remove('light-theme');
+    }
+}
+
+// Переключение темы по кнопке
+document.getElementById('toggle-theme').addEventListener('click', toggleTheme);
+
+// Уведомления
+function showNotification(message) {
+    const notification = document.getElementById('notification');
+    notification.innerText = message;
+    notification.style.display = 'block';
+    setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}
+
+// Звуковые эффекты
+function playSound(sound) {
+    const audio = new Audio(`./assets/sounds/${sound}.mp3`);
+    audio.play();
+}
+
 // Элементы интерфейса
-const settingsButton = document.getElementById('settings-button');
+const menuButton = document.getElementById('menu-button');
+const dropdownMenu = document.getElementById('dropdown-menu');
+const openSettingsButton = document.getElementById('open-settings');
+const openFriendsButton = document.getElementById('open-friends');
+const openLeaderboardButton = document.getElementById('open-leaderboard');
+const openAchievementsButton = document.getElementById('open-achievements');
 const settingsMenu = document.getElementById('settings-menu');
 const closeSettingsButton = document.getElementById('close-settings');
-const friendsButton = document.getElementById('friends-button');
 const friendsTab = document.getElementById('friends-tab');
 const closeFriendsTabButton = document.getElementById('close-friends-tab');
+const leaderboardTab = document.getElementById('leaderboard-tab');
+const closeLeaderboardTabButton = document.getElementById('close-leaderboard-tab');
+const achievementsTab = document.getElementById('achievements-tab');
+const closeAchievementsTabButton = document.getElementById('close-achievements-tab');
+
+// Открытие/закрытие выпадающего меню
+menuButton.addEventListener('click', () => {
+    dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block';
+});
 
 // Открытие настроек
-settingsButton.addEventListener('click', () => {
+openSettingsButton.addEventListener('click', () => {
     settingsMenu.style.display = 'block';
+    dropdownMenu.style.display = 'none';
 });
 
 // Закрытие настроек
@@ -329,14 +426,39 @@ closeSettingsButton.addEventListener('click', () => {
 });
 
 // Открытие вкладки друзей
-friendsButton.addEventListener('click', () => {
+openFriendsButton.addEventListener('click', () => {
     friendsTab.style.display = 'block';
+    dropdownMenu.style.display = 'none';
     loadFriends();
 });
 
 // Закрытие вкладки друзей
 closeFriendsTabButton.addEventListener('click', () => {
     friendsTab.style.display = 'none';
+});
+
+// Открытие таблицы лидеров
+openLeaderboardButton.addEventListener('click', () => {
+    leaderboardTab.style.display = 'block';
+    dropdownMenu.style.display = 'none';
+    loadLeaderboard();
+});
+
+// Закрытие таблицы лидеров
+closeLeaderboardTabButton.addEventListener('click', () => {
+    leaderboardTab.style.display = 'none';
+});
+
+// Открытие достижений
+openAchievementsButton.addEventListener('click', () => {
+    achievementsTab.style.display = 'block';
+    dropdownMenu.style.display = 'none';
+    loadAchievements();
+});
+
+// Закрытие достижений
+closeAchievementsTabButton.addEventListener('click', () => {
+    achievementsTab.style.display = 'none';
 });
 
 // Загрузка списка друзей
@@ -365,6 +487,96 @@ async function loadFriends() {
                 friendsListElement.appendChild(friendItem);
             }
         }
+    }
+}
+
+// Загрузка таблицы лидеров
+async function loadLeaderboard() {
+    const leaderboardList = document.getElementById('leaderboard-list');
+    leaderboardList.innerHTML = '';
+
+    const usersRef = collection(db, 'users');
+    const topUsersQuery = query(usersRef, orderBy('score', 'desc'), limit(10));
+    const querySnapshot = await getDocs(topUsersQuery);
+
+    querySnapshot.forEach((doc) => {
+        const userData = doc.data();
+        const leaderboardItem = document.createElement('div');
+        leaderboardItem.classList.add('leaderboard-item');
+        leaderboardItem.innerHTML = `
+            <span>ID: ${doc.id}</span>
+            <span>Очки: ${userData.score}</span>
+        `;
+        leaderboardList.appendChild(leaderboardItem);
+    });
+}
+
+// Достижения
+const achievements = [
+    { id: 1, name: 'Первый клик', description: 'Сделайте первый клик', achieved: false },
+    { id: 2, name: '100 кликов', description: 'Сделайте 100 кликов', achieved: false },
+    // Добавьте больше достижений
+];
+
+// Проверка достижений
+function checkAchievements() {
+    achievements.forEach((achievement) => {
+        if (!achievement.achieved) {
+            if (achievement.id === 1 && score >= 1) {
+                achievement.achieved = true;
+                notifyAchievement(achievement);
+            } else if (achievement.id === 2 && score >= 100) {
+                achievement.achieved = true;
+                notifyAchievement(achievement);
+            }
+            // Добавьте дополнительные условия для других достижений
+        }
+    });
+    saveAchievements();
+}
+
+// Уведомление о достижении
+function notifyAchievement(achievement) {
+    showNotification(`Достижение разблокировано: ${achievement.name}`);
+    playSound('achievement');
+}
+
+// Загрузка достижений
+function loadAchievements() {
+    const achievementsList = document.getElementById('achievements-list');
+    achievementsList.innerHTML = '';
+    achievements.forEach((achievement) => {
+        const achievementItem = document.createElement('div');
+        achievementItem.classList.add('achievement-item');
+        achievementItem.innerHTML = `
+            <strong>${achievement.name}</strong> - ${achievement.description} - ${achievement.achieved ? '✅' : '❌'}
+        `;
+        achievementsList.appendChild(achievementItem);
+    });
+}
+
+// Сохранение достижений
+function saveAchievements() {
+    const userRef = doc(db, 'users', currentUser.uid);
+    const achievedIds = achievements.filter(a => a.achieved).map(a => a.id);
+    setDoc(userRef, {
+        achievements: achievedIds,
+    }, { merge: true }).catch((error) => {
+        console.error('Ошибка при сохранении достижений:', error);
+    });
+}
+
+// Загрузка достижений из базы данных
+async function loadUserAchievements() {
+    const userRef = doc(db, 'users', currentUser.uid);
+    const docSnap = await getDoc(userRef);
+    if (docSnap.exists()) {
+        const achievedIds = docSnap.data().achievements || [];
+        achievements.forEach((achievement) => {
+            if (achievedIds.includes(achievement.id)) {
+                achievement.achieved = true;
+            }
+        });
     }
 }
 

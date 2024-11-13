@@ -17,15 +17,17 @@
 </head>
 <body>
     <div id="app">
-        <!-- Кнопка настроек -->
-        <button id="settings-button">
-            <img src="./assets/images/settings-icon.png" alt="Settings">
-        </button>
+        <!-- Кнопка меню -->
+        <button id="menu-button">☰</button>
 
-        <!-- Кнопка "Друзья" -->
-        <button id="friends-button">
-            <img src="./assets/images/friends-icon.png" alt="Friends">
-        </button>
+        <!-- Выпадающее меню -->
+        <div id="dropdown-menu" style="display: none;">
+            <button id="open-settings">Настройки</button>
+            <button id="open-friends">Друзья</button>
+            <button id="open-leaderboard">Таблица лидеров</button>
+            <button id="open-achievements">Достижения</button>
+            <button id="toggle-theme">Сменить тему</button>
+        </div>
 
         <!-- Меню настроек -->
         <div id="settings-menu" style="display: none;">
@@ -44,6 +46,20 @@
             <div id="friends-list"></div>
         </div>
 
+        <!-- Вкладка таблицы лидеров -->
+        <div id="leaderboard-tab" style="display: none;">
+            <button id="close-leaderboard-tab">✕</button>
+            <h2>Таблица лидеров</h2>
+            <div id="leaderboard-list"></div>
+        </div>
+
+        <!-- Вкладка достижений -->
+        <div id="achievements-tab" style="display: none;">
+            <button id="close-achievements-tab">✕</button>
+            <h2>Достижения</h2>
+            <div id="achievements-list"></div>
+        </div>
+
         <!-- Переключатель языков -->
         <div id="language-switcher">
             <button data-lang="en">English</button>
@@ -59,6 +75,9 @@
             <p id="score"></p>
             <button id="click-button"></button>
         </div>
+
+        <!-- Уведомления -->
+        <div id="notification" style="display: none;"></div>
     </div>
 
     <!-- Подключаем скрипт -->
