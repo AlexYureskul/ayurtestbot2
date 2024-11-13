@@ -1,5 +1,5 @@
 // script.js
-//
+
 import firebaseConfig from './config.js';
 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
@@ -391,8 +391,6 @@ window.addEventListener('resize', () => {
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
 });
-//
-//
-//
+
 // Запуск приложения
 loadMovingModels();
