@@ -29,7 +29,7 @@ import {
 } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
 // Импорт GLTFLoader
-import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.121.1/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFLoader } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js';
 
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
