@@ -49,17 +49,9 @@ body, html {
     background-color: var(--bg-color);
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 0 10px;
     z-index: 3;
-}
-
-#close-app {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 16px;
-    cursor: pointer;
 }
 
 #user-profile {
@@ -81,7 +73,7 @@ body, html {
 /* Кнопка "Play" */
 #play-button {
     position: absolute;
-    top: 60px;
+    top: 70px;
     left: 50%;
     transform: translateX(-50%);
     padding: 15px 30px;

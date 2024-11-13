@@ -1,5 +1,9 @@
 // script.js
 
+// Импортируем Three.js и GLTFLoader
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
+import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
+
 // Firebase конфигурация
 const firebaseConfig = {
   apiKey: "AIzaSyAkdTpWuDDqs0iKDdxOkDlgnue9uEQOUO0",
@@ -28,15 +32,18 @@ import {
     getDocs
 } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
-// Импорт GLTFLoader
-import { GLTFLoader } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js';
-
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 
 // Инициализация сервисов
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Инициализация Telegram Web App
+Telegram.WebApp.ready();
+
+// Получение информации о пользователе из Telegram
+const tgUser = Telegram.WebApp.initDataUnsafe.user;
 
 // Анонимный вход
 signInAnonymously(auth).catch((error) => {
@@ -73,7 +80,12 @@ async function registerUserInDatabase(uid) {
             characterIndex: 0,
             language: 'ru',
             achievements: [],
-            theme: 'dark'
+            theme: 'dark',
+            telegramUsername: tgUser ? tgUser.username : null,
+            telegramUserId: tgUser ? tgUser.id : null,
+            telegramFirstName: tgUser ? tgUser.first_name : null,
+            telegramLastName: tgUser ? tgUser.last_name : null,
+            telegramPhotoUrl: tgUser ? tgUser.photo_url : null
         });
         console.log('Новый пользователь зарегистрирован в базе данных.');
     } else {
@@ -505,13 +517,14 @@ async function loadFriends() {
             const friendRef = doc(db, 'users', friendId);
             const friendDocSnap = await getDoc(friendRef);
             if (friendDocSnap.exists()) {
+                const friendData = friendDocSnap.data();
                 const friendItem = document.createElement('div');
                 friendItem.classList.add('friend-item');
 
                 // Добавьте информацию о друге
                 friendItem.innerHTML = `
-                    <img src="./assets/images/default-avatar.png" alt="Friend">
-                    <div class="friend-name">ID друга: ${friendId}</div>
+                    <img src="${friendData.telegramPhotoUrl || './assets/images/default-avatar.png'}" alt="Friend">
+                    <div class="friend-name">${friendData.telegramUsername || 'Пользователь'}</div>
                 `;
 
                 friendsListElement.appendChild(friendItem);
@@ -534,7 +547,7 @@ async function loadLeaderboard() {
         const leaderboardItem = document.createElement('div');
         leaderboardItem.classList.add('leaderboard-item');
         leaderboardItem.innerHTML = `
-            <span>ID: ${doc.id}</span>
+            <span>${userData.telegramUsername || 'Пользователь'}</span>
             <span>Очки: ${userData.score}</span>
         `;
         leaderboardList.appendChild(leaderboardItem);
@@ -643,7 +656,14 @@ window.addEventListener('resize', () => {
 // Загрузка информации о пользователе
 function loadUserProfile() {
     const userNameElement = document.getElementById('user-name');
-    userNameElement.innerText = `ID: ${currentUser.uid}`;
+    const userIconElement = document.getElementById('user-icon');
+
+    if (tgUser) {
+        userNameElement.innerText = tgUser.username || `${tgUser.first_name} ${tgUser.last_name}`;
+        userIconElement.src = tgUser.photo_url || './assets/images/default-avatar.png';
+    } else {
+        userNameElement.innerText = `ID: ${currentUser.uid}`;
+    }
 }
 
 // Обработчики интерфейса
@@ -663,9 +683,3 @@ function startGame() {
     // Загрузка персонажа
     loadCharacter(currentCharacterIndex);
 }
-
-// Кнопка закрытия приложения
-document.getElementById('close-app').addEventListener('click', () => {
-    // Закрытие приложения (если применяется в Telegram Web App)
-    Telegram.WebApp.close();
-});
