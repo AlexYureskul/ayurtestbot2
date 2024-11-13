@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <!-- Telegram Web Apps JS -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- i18next для локализации -->
+    <script src="https://unpkg.com/i18next@21.6.8/i18next.min.js"></script>
     <!-- Стили -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,6 +17,7 @@
     <div id="app">
         <!-- Верхняя панель -->
         <div id="top-bar">
+            <button id="close-app">Close</button>
             <div id="user-profile">
                 <img id="user-icon" src="./assets/images/default-avatar.png" alt="User Icon">
                 <span id="user-name">Username</span>
@@ -89,7 +94,7 @@
             <button id="nav-home">Home</button>
             <button id="nav-earn">Earn</button>
             <button id="nav-memepad">Memepad</button>
-            <button id="nav-friends">Friends</button>
+            <button id="nav-friends">Frens</button>
             <button id="nav-wallet">Wallet</button>
         </div>
     </div>

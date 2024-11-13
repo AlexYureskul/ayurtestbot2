@@ -1,17 +1,11 @@
 // script.js
 
-// Импортируем Three.js и GLTFLoader
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
-import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/GLTFLoader.js';
-
 // Firebase конфигурация
 const firebaseConfig = {
-  apiKey: "AIzaSyAkdTpWuDDqs0iKDdxOkDlgnue9uEQOUO0",
-  authDomain: "ayurtestbot2-6d1ea.firebaseapp.com",
-  projectId: "ayurtestbot2-6d1ea",
-  storageBucket: "ayurtestbot2-6d1ea.firebasestorage.app",
-  messagingSenderId: "935248261137",
-  appId: "1:935248261137:web:4a468ed8d42dc0b724c1b0"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "your-project-id.firebaseapp.com",
+    projectId: "your-project-id",
+    // ... другие настройки
 };
 
 // Импорт Firebase модулей
@@ -32,18 +26,15 @@ import {
     getDocs
 } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
 
+// Импорт GLTFLoader
+import { GLTFLoader } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/jsm/loaders/GLTFLoader.js';
+
 // Инициализация Firebase
 const app = initializeApp(firebaseConfig);
 
 // Инициализация сервисов
 const auth = getAuth(app);
 const db = getFirestore(app);
-
-// Инициализация Telegram Web App
-Telegram.WebApp.ready();
-
-// Получение информации о пользователе из Telegram
-const tgUser = Telegram.WebApp.initDataUnsafe.user;
 
 // Анонимный вход
 signInAnonymously(auth).catch((error) => {
@@ -80,12 +71,7 @@ async function registerUserInDatabase(uid) {
             characterIndex: 0,
             language: 'ru',
             achievements: [],
-            theme: 'dark',
-            telegramUsername: tgUser ? tgUser.username : null,
-            telegramUserId: tgUser ? tgUser.id : null,
-            telegramFirstName: tgUser ? tgUser.first_name : null,
-            telegramLastName: tgUser ? tgUser.last_name : null,
-            telegramPhotoUrl: tgUser ? tgUser.photo_url : null
+            theme: 'dark'
         });
         console.log('Новый пользователь зарегистрирован в базе данных.');
     } else {
@@ -113,14 +99,11 @@ async function initApp() {
     // Загрузка локализации
     await loadLocales();
 
-    // Загрузка информации о пользователе
-    loadUserProfile();
-
     // Запуск анимации
     animate();
 
-    // Загрузка моделей
-    loadMovingModels();
+    // Обновление интерфейса пользователя
+    updateUserProfile();
 }
 
 // Обработка реферальной системы
@@ -233,7 +216,7 @@ document.getElementById('click-button').addEventListener('click', () => {
 function moveButton() {
     const button = document.getElementById('click-button');
     const x = Math.random() * (window.innerWidth - button.offsetWidth);
-    const y = Math.random() * (window.innerHeight - button.offsetHeight - 80); // Учитываем нижнюю панель
+    const y = Math.random() * (window.innerHeight - button.offsetHeight - 100) + 50;
 
     button.style.position = 'absolute';
     button.style.left = `${x}px`;
@@ -261,6 +244,11 @@ const modelPaths = [
     './assets/models/character5.glb',
 ];
 
+// Добавьте эти переменные
+let mixers = [];
+const clock = new THREE.Clock();
+
+// Загрузка моделей и их хаотичное движение
 function loadMovingModels() {
     const loader = new GLTFLoader();
     modelPaths.forEach((path, index) => {
@@ -275,7 +263,7 @@ function loadMovingModels() {
                 const mixer = new THREE.AnimationMixer(model);
                 const action = mixer.clipAction(gltf.animations[0]);
                 action.play();
-                model.userData.mixer = mixer;
+                mixers.push(mixer);
             }
         }, undefined, (error) => {
             console.error(`Ошибка загрузки модели ${path}:`, error);
@@ -288,11 +276,10 @@ function animateModels(delta) {
     models.forEach((obj) => {
         obj.model.position.x += (Math.random() - 0.5) * obj.speed;
         obj.model.position.y += (Math.random() - 0.5) * obj.speed;
+    });
 
-        // Обновление анимаций
-        if (obj.model.userData.mixer) {
-            obj.model.userData.mixer.update(delta);
-        }
+    mixers.forEach((mixer) => {
+        mixer.update(delta);
     });
 }
 
@@ -307,8 +294,7 @@ const characters = [
 
 let currentCharacterIndex = 0;
 let character;
-let mixer;
-const clock = new THREE.Clock();
+let characterMixer;
 
 // Загрузка персонажа
 function loadCharacter(index) {
@@ -323,8 +309,8 @@ function loadCharacter(index) {
 
         // Проверяем наличие анимаций
         if (gltf.animations && gltf.animations.length > 0) {
-            mixer = new THREE.AnimationMixer(character);
-            const action = mixer.clipAction(gltf.animations[0]);
+            characterMixer = new THREE.AnimationMixer(character);
+            const action = characterMixer.clipAction(gltf.animations[0]);
             action.play();
         }
     }, undefined, (error) => {
@@ -356,6 +342,7 @@ async function loadSettings() {
             applyTheme(currentTheme);
         }
         updateContent();
+        loadCharacter(currentCharacterIndex);
     } catch (error) {
         console.error('Ошибка при загрузке настроек:', error);
     }
@@ -517,14 +504,13 @@ async function loadFriends() {
             const friendRef = doc(db, 'users', friendId);
             const friendDocSnap = await getDoc(friendRef);
             if (friendDocSnap.exists()) {
-                const friendData = friendDocSnap.data();
                 const friendItem = document.createElement('div');
                 friendItem.classList.add('friend-item');
 
                 // Добавьте информацию о друге
                 friendItem.innerHTML = `
-                    <img src="${friendData.telegramPhotoUrl || './assets/images/default-avatar.png'}" alt="Friend">
-                    <div class="friend-name">${friendData.telegramUsername || 'Пользователь'}</div>
+                    <img src="./assets/images/default-avatar.png" alt="Friend">
+                    <div class="friend-name">ID друга: ${friendId}</div>
                 `;
 
                 friendsListElement.appendChild(friendItem);
@@ -547,7 +533,7 @@ async function loadLeaderboard() {
         const leaderboardItem = document.createElement('div');
         leaderboardItem.classList.add('leaderboard-item');
         leaderboardItem.innerHTML = `
-            <span>${userData.telegramUsername || 'Пользователь'}</span>
+            <span>ID: ${doc.id}</span>
             <span>Очки: ${userData.score}</span>
         `;
         leaderboardList.appendChild(leaderboardItem);
@@ -630,12 +616,8 @@ function animate() {
 
     const delta = clock.getDelta();
 
-    if (mixer) {
-        mixer.update(delta);
-    }
-
-    if (character) {
-        character.rotation.y += 0.01;
+    if (characterMixer) {
+        characterMixer.update(delta);
     }
 
     animateModels(delta);
@@ -653,20 +635,15 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-// Загрузка информации о пользователе
-function loadUserProfile() {
+// Обновление профиля пользователя
+function updateUserProfile() {
     const userNameElement = document.getElementById('user-name');
-    const userIconElement = document.getElementById('user-icon');
-
-    if (tgUser) {
-        userNameElement.innerText = tgUser.username || `${tgUser.first_name} ${tgUser.last_name}`;
-        userIconElement.src = tgUser.photo_url || './assets/images/default-avatar.png';
-    } else {
-        userNameElement.innerText = `ID: ${currentUser.uid}`;
-    }
+    userNameElement.innerText = `ID: ${currentUser.uid}`;
 }
 
 // Обработчики интерфейса
+
+// Кнопка "Play"
 document.getElementById('play-button').addEventListener('click', () => {
     // Скрываем кнопку "Play" и показываем игровой интерфейс
     document.getElementById('play-button').style.display = 'none';
@@ -680,6 +657,35 @@ document.getElementById('play-button').addEventListener('click', () => {
 
 // Функция запуска игры
 function startGame() {
-    // Загрузка персонажа
-    loadCharacter(currentCharacterIndex);
+    // Ваш код для инициализации игры, если требуется
 }
+
+// Кнопка "Close"
+document.getElementById('close-app').addEventListener('click', () => {
+    // Закрытие веб-приложения в Telegram
+    Telegram.WebApp.close();
+});
+
+// Нижняя навигационная панель
+document.getElementById('nav-home').addEventListener('click', () => {
+    // Ваш код для раздела Home
+});
+
+document.getElementById('nav-earn').addEventListener('click', () => {
+    // Ваш код для раздела Earn
+});
+
+document.getElementById('nav-memepad').addEventListener('click', () => {
+    // Ваш код для раздела Memepad
+});
+
+document.getElementById('nav-friends').addEventListener('click', () => {
+    // Ваш код для раздела Friends
+});
+
+document.getElementById('nav-wallet').addEventListener('click', () => {
+    // Ваш код для раздела Wallet
+});
+
+// Запуск приложения
+loadMovingModels();
