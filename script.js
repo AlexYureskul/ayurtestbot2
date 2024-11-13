@@ -3,6 +3,7 @@ const tg = window.Telegram.WebApp;
 import firebaseConfig from './config.js';
 // Firebase Configuration
 //cfg
+//
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
