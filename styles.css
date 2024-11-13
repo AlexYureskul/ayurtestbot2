@@ -81,15 +81,6 @@ body, html {
 
 #click-button:active {
     transform: scale(0.95);
-    animation: moveButton 0.5s ease-in-out forwards;
-}
-
-/* Анимация перемещения кнопки */
-@keyframes moveButton {
-    to {
-        top: calc(100% * var(--random-y));
-        left: calc(100% * var(--random-x));
-    }
 }
 
 /* Кнопка настроек */

@@ -11,7 +11,7 @@ const db = firebase.firestore();
 
 // Анонимный вход
 auth.signInAnonymously().catch((error) => {
-    console.error(error);
+    console.error('Authentication error:', error);
 });
 
 // Текущий пользователь
@@ -19,9 +19,41 @@ let currentUser;
 auth.onAuthStateChanged((user) => {
     if (user) {
         currentUser = user;
+
+        // Регистрация пользователя в базе данных
+        registerUserInDatabase(currentUser.uid);
+
         initApp();
+    } else {
+        console.error('User is not authenticated');
     }
 });
+
+// Функция для регистрации пользователя в базе данных
+function registerUserInDatabase(uid) {
+    const userRef = db.collection('users').doc(uid);
+
+    userRef.get().then((doc) => {
+        if (!doc.exists) {
+            // Если пользователь не существует, создаем новый документ
+            userRef.set({
+                score: 0,
+                friends: [],
+                referrer: null,
+                characterIndex: 0,
+                language: 'ru',
+            }).then(() => {
+                console.log('Новый пользователь зарегистрирован в базе данных.');
+            }).catch((error) => {
+                console.error('Ошибка при регистрации пользователя:', error);
+            });
+        } else {
+            console.log('Пользователь уже существует в базе данных.');
+        }
+    }).catch((error) => {
+        console.error('Ошибка при проверке пользователя в базе данных:', error);
+    });
+}
 
 // Инициализация приложения после аутентификации
 function initApp() {
@@ -30,7 +62,6 @@ function initApp() {
 
     // Загрузка настроек и персонажа
     loadSettings();
-    loadCharacter(currentCharacterIndex);
 
     // Загрузка счёта
     loadScore();
@@ -54,7 +85,6 @@ function handleReferral() {
         // Сохранение информации о реферале
         db.collection('users').doc(currentUser.uid).set({
             referrer: referrerId,
-            score: score,
         }, { merge: true });
 
         // Обновление данных реферера
@@ -89,7 +119,7 @@ function initI18n() {
         lng: currentLanguage,
         resources
     }, (err, t) => {
-        if (err) return console.error(err);
+        if (err) return console.error('i18next init error:', err);
         updateContent();
     });
 }
@@ -120,6 +150,8 @@ function loadScore() {
             score = 0;
         }
         updateContent();
+    }).catch((error) => {
+        console.error('Error loading score:', error);
     });
 }
 
@@ -141,11 +173,12 @@ document.getElementById('click-button').addEventListener('click', () => {
 // Функция перемещения кнопки
 function moveButton() {
     const button = document.getElementById('click-button');
-    const x = Math.random();
-    const y = Math.random();
+    const x = Math.random() * (window.innerWidth - button.offsetWidth);
+    const y = Math.random() * (window.innerHeight - button.offsetHeight);
 
-    button.style.setProperty('--random-x', x);
-    button.style.setProperty('--random-y', y);
+    button.style.position = 'absolute';
+    button.style.left = `${x}px`;
+    button.style.top = `${y}px`;
 }
 
 // Three.js
@@ -178,6 +211,8 @@ function loadMovingModels() {
             model.position.set(Math.random() * 10 - 5, Math.random() * 10 - 5, 0);
             scene.add(model);
             models.push({ model: model, speed: Math.random() * 0.02 });
+        }, undefined, (error) => {
+            console.error(`Error loading model ${path}:`, error);
         });
     });
 }
@@ -210,9 +245,10 @@ function loadCharacter(index) {
     const loader = new THREE.GLTFLoader();
     loader.load(characters[index].modelPath, (gltf) => {
         character = gltf.scene;
+        character.position.set(0, -1, 0);
         scene.add(character);
     }, undefined, (error) => {
-        console.error(error);
+        console.error('Error loading character:', error);
     });
 }
 
@@ -233,6 +269,8 @@ function loadSettings() {
             i18next.changeLanguage(currentLanguage, updateContent);
         }
         updateContent();
+    }).catch((error) => {
+        console.error('Error loading settings:', error);
     });
 }
 
@@ -241,7 +279,9 @@ function saveSettings() {
     db.collection('users').doc(currentUser.uid).set({
         characterIndex: currentCharacterIndex,
         language: currentLanguage,
-    }, { merge: true });
+    }, { merge: true }).catch((error) => {
+        console.error('Error saving settings:', error);
+    });
 }
 
 // Генерация списка персонажей
@@ -322,9 +362,13 @@ function loadFriends() {
 
                         friendsListElement.appendChild(friendItem);
                     }
+                }).catch((error) => {
+                    console.error('Error loading friend data:', error);
                 });
             });
         }
+    }).catch((error) => {
+        console.error('Error loading friends:', error);
     });
 }
 
@@ -352,5 +396,5 @@ window.addEventListener('resize', () => {
     camera.updateProjectionMatrix();
 });
 
-// Загрузка локализаций
+// Запуск приложения
 loadMovingModels();
