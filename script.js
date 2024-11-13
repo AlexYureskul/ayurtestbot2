@@ -133,7 +133,20 @@ document.getElementById('click-button').addEventListener('click', () => {
     score++;
     updateContent();
     saveScore();
+
+    // Перемещение кнопки
+    moveButton();
 });
+
+// Функция перемещения кнопки
+function moveButton() {
+    const button = document.getElementById('click-button');
+    const x = Math.random();
+    const y = Math.random();
+
+    button.style.setProperty('--random-x', x);
+    button.style.setProperty('--random-y', y);
+}
 
 // Three.js
 const scene = new THREE.Scene();
@@ -295,4 +308,49 @@ function loadFriends() {
         if (doc.exists) {
             const friends = doc.data().friends || [];
             friends.forEach((friendId) => {
-                db.collection('users').doc(friendId).get().then((friendDoc) =>
+                db.collection('users').doc(friendId).get().then((friendDoc) => {
+                    if (friendDoc.exists) {
+                        const friendData = friendDoc.data();
+                        const friendItem = document.createElement('div');
+                        friendItem.classList.add('friend-item');
+
+                        // Добавьте информацию о друге
+                        friendItem.innerHTML = `
+                            <img src="./assets/images/default-avatar.png" alt="Friend">
+                            <div class="friend-name">ID друга: ${friendId}</div>
+                        `;
+
+                        friendsListElement.appendChild(friendItem);
+                    }
+                });
+            });
+        }
+    });
+}
+
+// Анимация
+camera.position.z = 5;
+function animate() {
+    requestAnimationFrame(animate);
+
+    if (character) {
+        character.rotation.y += 0.01;
+    }
+
+    animateModels();
+
+    renderer.render(scene, camera);
+}
+
+// Обработка изменения размера окна
+window.addEventListener('resize', () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    renderer.setSize(width, height);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+});
+
+// Загрузка локализаций
+loadMovingModels();

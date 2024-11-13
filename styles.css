@@ -72,6 +72,7 @@ body, html {
     border-radius: 30px;
     cursor: pointer;
     transition: transform 0.1s, background-color 0.3s;
+    position: relative;
 }
 
 #click-button:hover {
@@ -80,16 +81,15 @@ body, html {
 
 #click-button:active {
     transform: scale(0.95);
-    position: absolute;
-    top: calc(50% - 25px);
-    left: calc(50% - 75px);
-    animation: moveButton 1s ease-in-out forwards;
+    animation: moveButton 0.5s ease-in-out forwards;
 }
 
 /* Анимация перемещения кнопки */
 @keyframes moveButton {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(100px, -100px); }
+    to {
+        top: calc(100% * var(--random-y));
+        left: calc(100% * var(--random-x));
+    }
 }
 
 /* Кнопка настроек */
