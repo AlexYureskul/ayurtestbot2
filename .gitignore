@@ -69,5 +69,4 @@ node_modules/
 .dataconnect
 
 bot.py
-config.js
-serviceAccountKey.json
+
