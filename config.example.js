@@ -5,6 +5,7 @@ const firebaseConfig = {
     authDomain: "your-project-id.firebaseapp.com",
     projectId: "your-project-id",
     // ... другие настройки
+    //
 };
 
 export default firebaseConfig;
